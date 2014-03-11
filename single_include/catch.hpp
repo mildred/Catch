@@ -1,6 +1,6 @@
 /*
- *  CATCH v1.0 build 31 (master branch)
- *  Generated: 2014-03-10 18:01:22.986492
+ *  CATCH v1.0 build 32 (master branch)
+ *  Generated: 2014-03-11 16:06:41.549000
  *  ----------------------------------------------------------
  *  This file has been merged from multiple headers. Please don't edit it directly
  *  Copyright (c) 2012 Two Blue Cubes Ltd. All rights reserved.
@@ -462,7 +462,8 @@ struct AutoReg {
 
     AutoReg(    TestFunction function,
                 SourceLineInfo const& lineInfo,
-                NameAndDesc const& nameAndDesc );
+                NameAndDesc const& nameAndDesc,
+                char const* className = "" );
 
     template<typename C>
     AutoReg(    void (C::*method)(),
@@ -504,11 +505,34 @@ private:
     #define INTERNAL_CATCH_TEST_CASE_METHOD( ClassName, ... )\
         namespace{ \
             struct INTERNAL_CATCH_UNIQUE_NAME( ____C_A_T_C_H____T_E_S_T____ ) : ClassName{ \
+            public: \
                 void test(); \
             }; \
             Catch::AutoReg INTERNAL_CATCH_UNIQUE_NAME( autoRegistrar ) ( &INTERNAL_CATCH_UNIQUE_NAME( ____C_A_T_C_H____T_E_S_T____ )::test, #ClassName, Catch::NameAndDesc( __VA_ARGS__ ), CATCH_INTERNAL_LINEINFO ); \
         } \
         void INTERNAL_CATCH_UNIQUE_NAME( ____C_A_T_C_H____T_E_S_T____ )::test()
+
+    ///////////////////////////////////////////////////////////////////////////////
+    #define INTERNAL_CATCH_TEST_CASE_CLASS( ClassName, ... )\
+        namespace{ \
+            struct INTERNAL_CATCH_UNIQUE_NAME( ____C_A_T_C_H____T_E_S_T____ ) : ClassName{ \
+                static void test(); \
+            }; \
+            Catch::AutoReg INTERNAL_CATCH_UNIQUE_NAME( autoRegistrar ) ( &INTERNAL_CATCH_UNIQUE_NAME( ____C_A_T_C_H____T_E_S_T____ )::test, CATCH_INTERNAL_LINEINFO, Catch::NameAndDesc( __VA_ARGS__ ), #ClassName ); \
+        } \
+        void INTERNAL_CATCH_UNIQUE_NAME( ____C_A_T_C_H____T_E_S_T____ )::test()
+
+    ///////////////////////////////////////////////////////////////////////////////
+    #define INTERNAL_CATCH_TEST_CASE_TEMPLATE( ClassName, ... )\
+        namespace{ \
+            struct INTERNAL_CATCH_UNIQUE_NAME( ____C_A_T_C_H____T_E_S_T____ ) {}; \
+        } \
+        template<> class ClassName<INTERNAL_CATCH_UNIQUE_NAME( ____C_A_T_C_H____T_E_S_T____ )> { \
+        public: \
+            static void test(); \
+        }; \
+        Catch::AutoReg INTERNAL_CATCH_UNIQUE_NAME( autoRegistrar ) ( &ClassName<INTERNAL_CATCH_UNIQUE_NAME( ____C_A_T_C_H____T_E_S_T____ )>::test, CATCH_INTERNAL_LINEINFO, Catch::NameAndDesc( __VA_ARGS__ ), #ClassName ); \
+        void ClassName<INTERNAL_CATCH_UNIQUE_NAME( ____C_A_T_C_H____T_E_S_T____ )>::test()
 
 #else
     ///////////////////////////////////////////////////////////////////////////////
@@ -530,6 +554,28 @@ private:
             Catch::AutoReg INTERNAL_CATCH_UNIQUE_NAME( autoRegistrar ) ( &INTERNAL_CATCH_UNIQUE_NAME( ____C_A_T_C_H____T_E_S_T____ )::test, #ClassName, Catch::NameAndDesc( TestName, Desc ), CATCH_INTERNAL_LINEINFO ); \
         } \
         void INTERNAL_CATCH_UNIQUE_NAME( ____C_A_T_C_H____T_E_S_T____ )::test()
+
+    ///////////////////////////////////////////////////////////////////////////////
+    #define INTERNAL_CATCH_TEST_CASE_CLASS( ClassName, TestName, Desc )\
+        namespace{ \
+            struct INTERNAL_CATCH_UNIQUE_NAME( ____C_A_T_C_H____T_E_S_T____ ) : ClassName{ \
+                static void test(); \
+            }; \
+            Catch::AutoReg INTERNAL_CATCH_UNIQUE_NAME( autoRegistrar ) ( &INTERNAL_CATCH_UNIQUE_NAME( ____C_A_T_C_H____T_E_S_T____ )::test, CATCH_INTERNAL_LINEINFO, Catch::NameAndDesc( TestName, Desc ), #ClassName ); \
+        } \
+        void INTERNAL_CATCH_UNIQUE_NAME( ____C_A_T_C_H____T_E_S_T____ )::test()
+
+    ///////////////////////////////////////////////////////////////////////////////
+    #define INTERNAL_CATCH_TEST_CASE_TEMPLATE( ClassName, TestName, Desc )\
+        namespace{ \
+            struct INTERNAL_CATCH_UNIQUE_NAME( ____C_A_T_C_H____T_E_S_T____ ) {}; \
+        } \
+        template<> class ClassName<INTERNAL_CATCH_UNIQUE_NAME( ____C_A_T_C_H____T_E_S_T____ )> { \
+        public: \
+            static void test(); \
+        }; \
+        Catch::AutoReg INTERNAL_CATCH_UNIQUE_NAME( autoRegistrar ) ( &ClassName<INTERNAL_CATCH_UNIQUE_NAME( ____C_A_T_C_H____T_E_S_T____ )>::test, CATCH_INTERNAL_LINEINFO, Catch::NameAndDesc( TestName, Desc ), #ClassName ); \
+        void ClassName<INTERNAL_CATCH_UNIQUE_NAME( ____C_A_T_C_H____T_E_S_T____ )>::test()
 
 #endif
 
@@ -5448,8 +5494,9 @@ namespace Catch {
 
     AutoReg::AutoReg(   TestFunction function,
                         SourceLineInfo const& lineInfo,
-                        NameAndDesc const& nameAndDesc ) {
-        registerTestCase( new FreeFunctionTestCase( function ), "", nameAndDesc, lineInfo );
+                        NameAndDesc const& nameAndDesc,
+                        char const* className ) {
+        registerTestCase( new FreeFunctionTestCase( function ), className, nameAndDesc, lineInfo );
     }
 
     AutoReg::~AutoReg() {}
@@ -6591,7 +6638,7 @@ namespace Catch {
 namespace Catch {
 
     // These numbers are maintained by a script
-    Version libraryVersion( 1, 0, 31, "master" );
+    Version libraryVersion( 1, 0, 32, "master" );
 }
 
 // #included from: catch_message.hpp
@@ -8381,6 +8428,8 @@ int main (int argc, char * const argv[]) {
 #ifdef CATCH_CONFIG_VARIADIC_MACROS
     #define TEST_CASE( ... ) INTERNAL_CATCH_TESTCASE( __VA_ARGS__ )
     #define TEST_CASE_METHOD( className, ... ) INTERNAL_CATCH_TEST_CASE_METHOD( className, __VA_ARGS__ )
+    #define TEST_CASE_CLASS( className, ... ) INTERNAL_CATCH_TEST_CASE_CLASS( className, __VA_ARGS__ )
+    #define TEST_CASE_TEMPLATE( className, ... ) INTERNAL_CATCH_TEST_CASE_TEMPLATE( className, __VA_ARGS__ )
     #define METHOD_AS_TEST_CASE( method, ... ) INTERNAL_CATCH_METHOD_AS_TEST_CASE( method, __VA_ARGS__ )
     #define SECTION( ... ) INTERNAL_CATCH_SECTION( __VA_ARGS__ )
     #define FAIL( ... ) INTERNAL_CATCH_MSG( Catch::ResultWas::ExplicitFailure, Catch::ResultDisposition::Normal, "FAIL", __VA_ARGS__ )
@@ -8388,6 +8437,8 @@ int main (int argc, char * const argv[]) {
 #else
     #define TEST_CASE( name, description ) INTERNAL_CATCH_TESTCASE( name, description )
     #define TEST_CASE_METHOD( className, name, description ) INTERNAL_CATCH_TEST_CASE_METHOD( className, name, description )
+    #define TEST_CASE_CLASS( className, name, description ) INTERNAL_CATCH_TEST_CASE_CLASS( className, name, description )
+    #define TEST_CASE_TEMPLATE( className, name, description ) INTERNAL_CATCH_TEST_CASE_TEMPLATE( className, name, description )
     #define METHOD_AS_TEST_CASE( method, name, description ) INTERNAL_CATCH_METHOD_AS_TEST_CASE( method, name, description )
     #define SECTION( name, description ) INTERNAL_CATCH_SECTION( name, description )
     #define FAIL( msg ) INTERNAL_CATCH_MSG( Catch::ResultWas::ExplicitFailure, Catch::ResultDisposition::Normal, "FAIL", msg )

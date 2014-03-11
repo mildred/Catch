@@ -46,7 +46,8 @@ struct AutoReg {
 
     AutoReg(    TestFunction function,
                 SourceLineInfo const& lineInfo,
-                NameAndDesc const& nameAndDesc );
+                NameAndDesc const& nameAndDesc,
+                char const* className = "" );
 
     template<typename C>
     AutoReg(    void (C::*method)(),
@@ -88,11 +89,34 @@ private:
     #define INTERNAL_CATCH_TEST_CASE_METHOD( ClassName, ... )\
         namespace{ \
             struct INTERNAL_CATCH_UNIQUE_NAME( ____C_A_T_C_H____T_E_S_T____ ) : ClassName{ \
+            public: \
                 void test(); \
             }; \
             Catch::AutoReg INTERNAL_CATCH_UNIQUE_NAME( autoRegistrar ) ( &INTERNAL_CATCH_UNIQUE_NAME( ____C_A_T_C_H____T_E_S_T____ )::test, #ClassName, Catch::NameAndDesc( __VA_ARGS__ ), CATCH_INTERNAL_LINEINFO ); \
         } \
         void INTERNAL_CATCH_UNIQUE_NAME( ____C_A_T_C_H____T_E_S_T____ )::test()
+
+    ///////////////////////////////////////////////////////////////////////////////
+    #define INTERNAL_CATCH_TEST_CASE_CLASS( ClassName, ... )\
+        namespace{ \
+            struct INTERNAL_CATCH_UNIQUE_NAME( ____C_A_T_C_H____T_E_S_T____ ) : ClassName{ \
+                static void test(); \
+            }; \
+            Catch::AutoReg INTERNAL_CATCH_UNIQUE_NAME( autoRegistrar ) ( &INTERNAL_CATCH_UNIQUE_NAME( ____C_A_T_C_H____T_E_S_T____ )::test, CATCH_INTERNAL_LINEINFO, Catch::NameAndDesc( __VA_ARGS__ ), #ClassName ); \
+        } \
+        void INTERNAL_CATCH_UNIQUE_NAME( ____C_A_T_C_H____T_E_S_T____ )::test()
+
+    ///////////////////////////////////////////////////////////////////////////////
+    #define INTERNAL_CATCH_TEST_CASE_TEMPLATE( ClassName, ... )\
+        namespace{ \
+            struct INTERNAL_CATCH_UNIQUE_NAME( ____C_A_T_C_H____T_E_S_T____ ) {}; \
+        } \
+        template<> class ClassName<INTERNAL_CATCH_UNIQUE_NAME( ____C_A_T_C_H____T_E_S_T____ )> { \
+        public: \
+            static void test(); \
+        }; \
+        Catch::AutoReg INTERNAL_CATCH_UNIQUE_NAME( autoRegistrar ) ( &ClassName<INTERNAL_CATCH_UNIQUE_NAME( ____C_A_T_C_H____T_E_S_T____ )>::test, CATCH_INTERNAL_LINEINFO, Catch::NameAndDesc( __VA_ARGS__ ), #ClassName ); \
+        void ClassName<INTERNAL_CATCH_UNIQUE_NAME( ____C_A_T_C_H____T_E_S_T____ )>::test()
 
 #else
     ///////////////////////////////////////////////////////////////////////////////
@@ -114,6 +138,28 @@ private:
             Catch::AutoReg INTERNAL_CATCH_UNIQUE_NAME( autoRegistrar ) ( &INTERNAL_CATCH_UNIQUE_NAME( ____C_A_T_C_H____T_E_S_T____ )::test, #ClassName, Catch::NameAndDesc( TestName, Desc ), CATCH_INTERNAL_LINEINFO ); \
         } \
         void INTERNAL_CATCH_UNIQUE_NAME( ____C_A_T_C_H____T_E_S_T____ )::test()
+
+    ///////////////////////////////////////////////////////////////////////////////
+    #define INTERNAL_CATCH_TEST_CASE_CLASS( ClassName, TestName, Desc )\
+        namespace{ \
+            struct INTERNAL_CATCH_UNIQUE_NAME( ____C_A_T_C_H____T_E_S_T____ ) : ClassName{ \
+                static void test(); \
+            }; \
+            Catch::AutoReg INTERNAL_CATCH_UNIQUE_NAME( autoRegistrar ) ( &INTERNAL_CATCH_UNIQUE_NAME( ____C_A_T_C_H____T_E_S_T____ )::test, CATCH_INTERNAL_LINEINFO, Catch::NameAndDesc( TestName, Desc ), #ClassName ); \
+        } \
+        void INTERNAL_CATCH_UNIQUE_NAME( ____C_A_T_C_H____T_E_S_T____ )::test()
+
+    ///////////////////////////////////////////////////////////////////////////////
+    #define INTERNAL_CATCH_TEST_CASE_TEMPLATE( ClassName, TestName, Desc )\
+        namespace{ \
+            struct INTERNAL_CATCH_UNIQUE_NAME( ____C_A_T_C_H____T_E_S_T____ ) {}; \
+        } \
+        template<> class ClassName<INTERNAL_CATCH_UNIQUE_NAME( ____C_A_T_C_H____T_E_S_T____ )> { \
+        public: \
+            static void test(); \
+        }; \
+        Catch::AutoReg INTERNAL_CATCH_UNIQUE_NAME( autoRegistrar ) ( &ClassName<INTERNAL_CATCH_UNIQUE_NAME( ____C_A_T_C_H____T_E_S_T____ )>::test, CATCH_INTERNAL_LINEINFO, Catch::NameAndDesc( TestName, Desc ), #ClassName ); \
+        void ClassName<INTERNAL_CATCH_UNIQUE_NAME( ____C_A_T_C_H____T_E_S_T____ )>::test()
 
 #endif
 
